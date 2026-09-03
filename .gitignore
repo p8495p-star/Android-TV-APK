@@ -1,0 +1,5 @@
+.gradle/
+work/
+*.unsigned.apk
+*.aligned.apk
+*.keystore
