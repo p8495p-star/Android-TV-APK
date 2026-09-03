@@ -23,8 +23,9 @@ jobs:
 
       - name: Install apktool
         run: |
-          curl -L -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/latest/download/apktool.jar
-          java -jar apktool.jar --version
+         curl -fsSL -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar
+test -s apktool.jar
+java -jar apktool.jar --version
 
       - name: Decode APK
         run: |
