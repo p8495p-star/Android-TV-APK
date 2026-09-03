@@ -21,11 +21,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install apktool
+          - name: Install apktool
         run: |
-         curl -fsSL -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar
-test -s apktool.jar
-java -jar apktool.jar --version
+          curl -fsSL -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar
+          test -s apktool.jar
+          java -jar apktool.jar --version
 
       - name: Decode APK
         run: |
