@@ -1,0 +1,66 @@
+name: Build Android TV APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install apktool
+        run: |
+          curl -L -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/latest/download/apktool.jar
+          java -jar apktool.jar --version
+
+      - name: Decode APK
+        run: |
+          test -s input/app.apk
+          rm -rf work
+          java -jar apktool.jar d input/app.apk -o work --force
+
+      - name: Patch Android TV manifest
+        run: python3 scripts/patch_manifest.py work/AndroidManifest.xml
+
+      - name: Rebuild
+        run: java -jar apktool.jar b work -o app-tv-unsigned.apk
+
+      - name: Align and sign
+        run: |
+          yes | sdkmanager "build-tools;35.0.0" >/dev/null 2>&1 || true
+          BT="$ANDROID_HOME/build-tools/35.0.0"
+          "$BT/zipalign" -f -p 4 app-tv-unsigned.apk app-tv-aligned.apk
+          keytool -genkeypair -v \
+            -keystore tv-debug.keystore \
+            -alias androidtv \
+            -keyalg RSA -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android TV Patch, O=Local"
+          "$BT/apksigner" sign \
+            --ks tv-debug.keystore \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out AndroidTV-Remote-Patched.apk \
+            app-tv-aligned.apk
+          "$BT/apksigner" verify --verbose AndroidTV-Remote-Patched.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AndroidTV-Remote-Patched
+          path: AndroidTV-Remote-Patched.apk
